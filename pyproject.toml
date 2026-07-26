@@ -4,4 +4,8 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "mediapipe>=0.10.35",
+    "opencv-python>=5.0.0.93",
+    "wayland-automation>=0.2.8",
+]
