@@ -46,6 +46,9 @@ cap = cv2.VideoCapture(0)
 pinch_start_x, pinch_start_y = 0, 0
 mouse_start_x, mouse_start_y = 0, 0
 pinch_toggle = False
+click_toggle = False
+curr_x = 0
+curr_y = 0
 
 with HandLandmarker.create_from_options(options) as landmarker:
     while cap.isOpened():
@@ -72,15 +75,21 @@ with HandLandmarker.create_from_options(options) as landmarker:
 
                 x_thumb, y_thumb = points[4]
                 x_index, y_index = points[8]
+                x_middle, y_middle = points[12]
 
-                distance = math.hypot(x_index - x_thumb, y_index - y_thumb)
+                distance_thumd_index = math.hypot(x_index - x_thumb, y_index - y_thumb)
+                distance_thumd_middle = math.hypot(x_middle - x_thumb, y_middle - y_thumb)
 
                 cv2.line(frame, (x_thumb, y_thumb), (x_index, y_index), (0, 0, 255), 3)
+                cv2.line(frame, (x_thumb, y_thumb), (x_middle, y_middle), (255, 0, 0), 3)
+
+                cxm, cym = (x_thumb + x_middle) // 2, (y_thumb + y_middle) // 2
+                cv2.circle(frame, (cxm, cym), 6, (255, 0, 0), -1)
 
                 cx, cy = (x_thumb + x_index) // 2, (y_thumb + y_index) // 2
                 cv2.circle(frame, (cx, cy), 6, (0, 0, 255), -1)
                 
-                if distance < 30:
+                if distance_thumd_index < 30:
                     if not pinch_toggle:
                         pinch_start_x, pinch_start_y = cx, cy
                         mouse_start_x, mouse_start_y = prev_x, prev_y
@@ -103,8 +112,14 @@ with HandLandmarker.create_from_options(options) as landmarker:
 
                     wa.click(int(curr_x), int(curr_y), "nothing")
                     prev_x, prev_y = curr_x, curr_y
+                elif distance_thumd_middle < 30:
+                    if not click_toggle:
+                        click_toggle = True
+                        wa.click(int(curr_x), int(curr_y), "left")
+                    cv2.circle(frame, (cxm, cym), 10, (0, 255, 0), -1)
                 else:
                     pinch_toggle = False
+                    click_toggle = False
 
                 for start_idx, end_idx in HAND_CONNECTIONS:
                     cv2.line(frame, points[start_idx], points[end_idx], (255, 255, 255), 2)
