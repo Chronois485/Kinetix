@@ -47,6 +47,7 @@ pinch_start_x, pinch_start_y = 0, 0
 mouse_start_x, mouse_start_y = 0, 0
 pinch_toggle = False
 click_toggle = False
+right_click_toggle = False
 curr_x = 0
 curr_y = 0
 
@@ -76,12 +77,20 @@ with HandLandmarker.create_from_options(options) as landmarker:
                 x_thumb, y_thumb = points[4]
                 x_index, y_index = points[8]
                 x_middle, y_middle = points[12]
+                x_ring, y_ring = points[16]
 
                 distance_thumd_index = math.hypot(x_index - x_thumb, y_index - y_thumb)
                 distance_thumd_middle = math.hypot(x_middle - x_thumb, y_middle - y_thumb)
+                distance_thumd_ring = math.hypot(x_ring - x_thumb, y_ring - y_thumb)
 
-                cv2.line(frame, (x_thumb, y_thumb), (x_index, y_index), (0, 0, 255), 3)
-                cv2.line(frame, (x_thumb, y_thumb), (x_middle, y_middle), (255, 0, 0), 3)
+
+                cv2.line(frame, (x_thumb, y_thumb), (x_index, y_index), (0, 0, 255), 2)
+                cv2.line(frame, (x_thumb, y_thumb), (x_middle, y_middle), (255, 0, 0), 2)
+                cv2.line(frame, (x_thumb, y_thumb), (x_ring, y_ring), (255, 0, 255), 2)
+
+
+                cxr, cyr = (x_thumb + x_ring) // 2, (y_thumb + y_ring) // 2
+                cv2.circle(frame, (cxr, cyr), 6, (255, 0, 255), -1)
 
                 cxm, cym = (x_thumb + x_middle) // 2, (y_thumb + y_middle) // 2
                 cv2.circle(frame, (cxm, cym), 6, (255, 0, 0), -1)
@@ -117,12 +126,18 @@ with HandLandmarker.create_from_options(options) as landmarker:
                         click_toggle = True
                         wa.click(int(curr_x), int(curr_y), "left")
                     cv2.circle(frame, (cxm, cym), 10, (0, 255, 0), -1)
+                elif distance_thumd_ring < 30:
+                    if not right_click_toggle:
+                        right_click_toggle = True
+                        wa.click(int(curr_x), int(curr_y), "right")
+                    cv2.circle(frame, (cxr, cyr), 10, (0, 255, 0), -1)
                 else:
                     pinch_toggle = False
                     click_toggle = False
+                    right_click_toggle = False
 
                 for start_idx, end_idx in HAND_CONNECTIONS:
-                    cv2.line(frame, points[start_idx], points[end_idx], (255, 255, 255), 2)
+                    cv2.line(frame, points[start_idx], points[end_idx], (255, 255, 255), 1)
         cv2.imshow("Kinetix", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
