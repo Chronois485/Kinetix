@@ -70,6 +70,7 @@ right_click_toggle = False
 curr_x = 0
 curr_y = 0
 sub_x, sub_y = 0.0, 0.0
+swipe_start = 0
 
 device = uinput.Device(
     [
@@ -77,6 +78,7 @@ device = uinput.Device(
         uinput.REL_Y,
         uinput.BTN_LEFT,
         uinput.BTN_RIGHT,
+        uinput.REL_WHEEL,
     ]
 )
 try:
@@ -203,8 +205,14 @@ try:
                         and y_start_pinky < y_pinky
                     ):
                         something_happened = True
+                        swipe_y = (y_index + y_middle) / 2
                         if not swipe_toggle:
                             swipe_toggle = True
+                            swipe_start = swipe_y
+                        if swipe_y - swipe_start < -30:
+                            device.emit(uinput.REL_WHEEL, 1)
+                        elif swipe_y - swipe_start > 30:
+                            device.emit(uinput.REL_WHEEL, -1)
 
                         cv2.circle(frame, (cxim, cyim), 10, (0, 200, 255), -1)
                     if distance_thumd_middle < 30:
@@ -212,21 +220,24 @@ try:
                         if not click_toggle:
                             click_toggle = True
                             device.emit(uinput.BTN_LEFT, 1)
+                        cv2.circle(frame, (cxm, cym), 10, (0, 255, 0), -1)
                     else:
                         device.emit(uinput.BTN_LEFT, 0)
-                        cv2.circle(frame, (cxm, cym), 10, (0, 255, 0), -1)
+
                     if distance_thumd_ring < 30:
                         something_happened = True
                         if not right_click_toggle:
                             right_click_toggle = True
                             device.emit(uinput.BTN_RIGHT, 1)
+                            cv2.circle(frame, (cxr, cyr), 10, (0, 255, 0), -1)
                     else:
                         device.emit(uinput.BTN_RIGHT, 0)
-                        cv2.circle(frame, (cxr, cyr), 10, (0, 255, 0), -1)
+
                     if not something_happened:
                         pinch_toggle = False
                         click_toggle = False
                         right_click_toggle = False
+                        swipe_toggle = False
 
                     for start_idx, end_idx in HAND_CONNECTIONS:
                         cv2.line(
