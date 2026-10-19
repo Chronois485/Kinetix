@@ -67,6 +67,7 @@ swipe_toggle = False
 pinch_toggle = False
 click_toggle = False
 right_click_toggle = False
+fist_toggle = False
 curr_x = 0
 curr_y = 0
 sub_x, sub_y = 0.0, 0.0
@@ -79,6 +80,8 @@ device = uinput.Device(
         uinput.BTN_LEFT,
         uinput.BTN_RIGHT,
         uinput.REL_WHEEL,
+        uinput.KEY_SPACE,
+        uinput.KEY_LEFTMETA,
     ]
 )
 try:
@@ -111,6 +114,8 @@ try:
                     x_ring, y_ring = points[16]
                     _, y_start_ring = points[13]
                     _, y_start_pinky = points[17]
+                    _, y_start_index = points[5]
+                    _, y_start_middle = points[9]
                     _, y_pinky = points[20]
 
                     distance_thumd_index = math.hypot(
@@ -233,11 +238,28 @@ try:
                     else:
                         device.emit(uinput.BTN_RIGHT, 0)
 
+                    if (
+                        (y_index > y_start_index)
+                        and (y_middle > y_start_middle)
+                        and (y_ring > y_start_ring)
+                        and (y_pinky > y_start_pinky)
+                    ):
+                        something_happened = True
+                        if not fist_toggle:
+                            fist_toggle = True
+                            device.emit(uinput.KEY_LEFTMETA, 1, syn=False)
+                            device.emit(uinput.KEY_SPACE, 1, syn=False)
+                            device.syn()
+                            device.emit(uinput.KEY_LEFTMETA, 0, syn=False)
+                            device.emit(uinput.KEY_SPACE, 0, syn=False)
+                            device.syn()
+
                     if not something_happened:
                         pinch_toggle = False
                         click_toggle = False
                         right_click_toggle = False
                         swipe_toggle = False
+                        fist_toggle = False
 
                     for start_idx, end_idx in HAND_CONNECTIONS:
                         cv2.line(
